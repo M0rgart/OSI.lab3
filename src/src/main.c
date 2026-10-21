@@ -15,6 +15,16 @@ static int is_sorted(const int *a, int n) {
     return 1;
 }
 
+static void print_array(const char *label, const int *a, int n) {
+    printf("%s (n=%d):\n", label, n);
+    for (int i = 0; i < n; i++) {
+        printf("%d ", a[i]);
+        if ((i + 1) % 20 == 0) printf("\n");
+    }
+    if (n % 20 != 0) printf("\n");
+    printf("\n");
+}
+
 static void bench(int n, int threads, int reps) {
     int *a = (int *)malloc((size_t)n * sizeof(int));
     if (!a) handle_error("malloc(a)");
@@ -46,8 +56,7 @@ static void bench(int n, int threads, int reps) {
 }
 
 int main(int argc, char **argv) {
-    int threads = 1, n = 1000000, reps = 3, bench_mode = 0, verbose = 0;
-    const char *in_path = NULL, *out_path = NULL;
+    int threads = 1, n = 1000000, reps = 3, bench_mode = 0, verbose = 0, print_mode = 0;
 
     for (int i = 1; i < argc; i++) {
         if      (!strcmp(argv[i], "-t") && i + 1 < argc) threads    = atoi(argv[++i]);
@@ -55,12 +64,11 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "-r") && i + 1 < argc) reps       = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-b"))                 bench_mode = 1;
         else if (!strcmp(argv[i], "-v"))                 verbose    = 1;
-        else if (!strcmp(argv[i], "-i") && i + 1 < argc) in_path    = argv[++i];
-        else if (!strcmp(argv[i], "-o") && i + 1 < argc) out_path   = argv[++i];
+        else if (!strcmp(argv[i], "-p"))                 print_mode = 1;
         else {
             fprintf(stderr,
                 "Usage:\n"
-                "  %s -t <threads> -n <size> [-i in] [-o out] [-v]   # sort\n"
+                "  %s -t <threads> -n <size> [-v] [-p]               # sort\n"
                 "  %s -b -n <size> -t <threads> [-r reps] [-v]       # benchmark\n",
                 argv[0], argv[0]);
             return 1;
@@ -74,15 +82,9 @@ int main(int argc, char **argv) {
     int *a = (int *)malloc((size_t)n * sizeof(int));
     if (!a) handle_error("malloc(a)");
 
-    if (in_path) {
-        FILE *f = fopen(in_path, "rb");
-        if (!f) handle_error("fopen(in)");
-        size_t got = fread(a, sizeof(int), (size_t)n, f);
-        fclose(f);
-        n = (int)got;
-    } else {
-        fill_random(a, n, 42u);
-    }
+    fill_random(a, n, 42u);
+
+    if (print_mode) print_array("Before sort", a, n);
 
     if (verbose) {
         printf("sorting %d ints with %d thread(s), pid=%lu\n",
@@ -103,12 +105,8 @@ int main(int argc, char **argv) {
     printf("OK: sorted %d ints in %.4f s with %d thread(s)\n",
            n, dt, threads);
 
-    if (out_path) {
-        FILE *f = fopen(out_path, "wb");
-        if (!f) handle_error("fopen(out)");
-        fwrite(a, sizeof(int), (size_t)n, f);
-        fclose(f);
-    }
+    if (print_mode) print_array("After sort", a, n);
+
     free(a);
     return 0;
 }
