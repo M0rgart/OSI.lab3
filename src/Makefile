@@ -5,7 +5,7 @@ SRC = src/main.c src/timsort.c src/pool.c src/common.c
 OBJ = $(SRC:.c=.o)
 TARGET = lab3.exe
 
-.PHONY: all clean run bench
+.PHONY: all clean
 
 all: $(TARGET)
 
